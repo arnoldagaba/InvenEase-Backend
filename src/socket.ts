@@ -19,7 +19,7 @@ export function setupSocketIO(server: HttpServer) {
     const io = new Server(server, {
         cors: {
             origin: config.frontend.url || "http://localhost:5174",
-            methods: ["GET", "POST"],
+            methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
             credentials: true,
         },
     });
