@@ -13,6 +13,12 @@ const envSchema = z.object({
 
     // Database
     DATABASE_URL: z.string(),
+
+    // JWTs
+    JWT_SECRET: z.string(),
+
+    // Frontend
+    FRONTEND_URL: z.string(),
 });
 
 /**
@@ -37,6 +43,12 @@ const config = {
     },
     database: {
         url: envVars.data.DATABASE_URL,
+    },
+    jwt: {
+        socket_secret: envVars.data.JWT_SECRET,
+    },
+    frontend: {
+        url: envVars.data.FRONTEND_URL,
     },
 };
 

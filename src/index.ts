@@ -1,9 +1,9 @@
-import app from "./app.ts";
+import server from "./app.ts";
 import config from "./common/config/env.ts";
 import logger from "./common/utils/logger.ts";
 
 const PORT = config.server.port;
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
     logger.info(
         `Server running on port ${PORT} in ${config.server.environment} mode`
     );

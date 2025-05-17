@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from "express";
+import http from "http";
 import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
@@ -8,13 +9,20 @@ import {
     requestPerformanceLogger,
 } from "./common/middleware/logger.middleware.ts";
 import config from "./common/config/env.ts";
-import appRoutes from "./modules/routes/index.ts"
+import appRoutes from "./modules/routes/index.ts";
 import {
     errorMiddleware,
     notFoundHandler,
 } from "./common/middleware/error.middleware.ts";
+import { setupSocketIO } from "./socket.ts";
 
 const app: Express = express();
+const server = http.createServer(app);
+
+// Set up Socket.IO
+const io = setupSocketIO(server);
+// Store io instance globally to use in other modules
+global.io = io;
 
 // --- Core middleware ---
 app.use(helmet());
@@ -48,4 +56,4 @@ app.use("/api", appRoutes);
 app.use(notFoundHandler);
 app.use(errorMiddleware);
 
-export default app;
+export default server;
