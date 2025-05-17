@@ -1,0 +1,172 @@
+graph TD
+    %% Define all entities with their key attributes
+    User["User
+    --
+    id: UUID
+    email: String
+    password: String
+    name: String
+    role: Role"]
+
+    Token["Token
+    --
+    id: UUID
+    token: String
+    type: TokenType
+    expiresAt: DateTime"]
+
+    Category["Category
+    --
+    id: UUID
+    name: String
+    description: String"]
+
+    Warehouse["Warehouse
+    --
+    id: UUID
+    name: String
+    address: String"]
+
+    Supplier["Supplier
+    --
+    id: UUID
+    name: String
+    email: String"]
+
+    Product["Product
+    --
+    id: UUID
+    sku: String
+    name: String
+    unitPrice: Decimal
+    costPrice: Decimal"]
+
+    ProductAttribute["ProductAttribute
+    --
+    id: UUID
+    name: String
+    value: String"]
+
+    ProductImage["ProductImage
+    --
+    id: UUID
+    url: String
+    isPrimary: Boolean"]
+
+    InventoryItem["InventoryItem
+    --
+    id: UUID
+    quantity: Int
+    minStockLevel: Int
+    maxStockLevel: Int
+    status: InventoryStatus"]
+
+    InventoryTransaction["InventoryTransaction
+    --
+    id: UUID
+    previousQuantity: Int
+    newQuantity: Int
+    changeAmount: Int
+    transactionType: TransactionType"]
+
+    InventoryTransfer["InventoryTransfer
+    --
+    id: UUID
+    transferDate: DateTime
+    status: String"]
+
+    TransferItem["TransferItem
+    --
+    id: UUID
+    quantity: Int"]
+
+    Order["Order
+    --
+    id: UUID
+    orderNumber: String
+    status: OrderStatus
+    totalAmount: Decimal
+    paymentStatus: PaymentStatus"]
+
+    OrderItem["OrderItem
+    --
+    id: UUID
+    quantity: Int
+    unitPrice: Decimal
+    totalPrice: Decimal"]
+
+    OrderDocument["OrderDocument
+    --
+    id: UUID
+    documentType: String
+    filename: String
+    fileUrl: String"]
+
+    Notification["Notification
+    --
+    id: UUID
+    type: NotificationType
+    message: String
+    seen: Boolean"]
+
+    ActivityLog["ActivityLog
+    --
+    id: UUID
+    entityType: String
+    entityId: String
+    action: String
+    timestamp: DateTime"]
+
+    SystemSettings["SystemSettings
+    --
+    id: UUID
+    key: String
+    value: String"]
+
+    %% Define relationships
+    User -- "has many" --> Token
+    User -- "manages" --> Warehouse
+    User -- "creates" --> Order
+    User -- "receives" --> Notification
+    User -- "performs" --> ActivityLog
+    User -- "uploads" --> OrderDocument
+    User -- "performs" --> InventoryTransaction
+    User -- "initiates" --> InventoryTransfer
+
+    Category -- "has children" --> Category
+    Category -- "has many" --> Product
+
+    Warehouse -- "stores" --> InventoryItem
+    Warehouse -- "source" --> InventoryTransfer
+    Warehouse -- "destination" --> InventoryTransfer
+
+    Supplier -- "provides" --> Product
+    Supplier -- "fulfills" --> Order
+
+    Product -- "has" --> ProductAttribute
+    Product -- "has" --> ProductImage
+    Product -- "tracked in" --> InventoryItem
+    Product -- "ordered as" --> OrderItem
+
+    InventoryItem -- "has history" --> InventoryTransaction
+    
+    InventoryTransfer -- "includes" --> TransferItem
+
+    Order -- "contains" --> OrderItem
+    Order -- "has" --> OrderDocument
+    Order -- "generates" --> Notification
+    Order -- "has" --> ActivityLog
+
+    %% Define colors for better visualization
+    classDef user fill:#f9d6ff,stroke:#333
+    classDef inventory fill:#d0f9ff,stroke:#333
+    classDef order fill:#d6ffdf,stroke:#333
+    classDef product fill:#fff6d0,stroke:#333
+    classDef system fill:#f0f0f0,stroke:#333
+
+    %% Apply classes
+    class User,Token user
+    class Warehouse,InventoryItem,InventoryTransaction,InventoryTransfer,TransferItem inventory
+    class Order,OrderItem,OrderDocument order
+    class Product,ProductAttribute,ProductImage,Category,Supplier product
+    class Notification,ActivityLog,SystemSettings system
