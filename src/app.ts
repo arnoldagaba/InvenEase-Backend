@@ -29,7 +29,6 @@ app.use(helmet());
 app.use(
     cors({
         origin: config.frontend.url || "http://localhost:5174",
-        methods: ["GET", "POST"],
         credentials: true,
     })
 );
