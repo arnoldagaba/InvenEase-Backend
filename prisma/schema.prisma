@@ -103,16 +103,17 @@ model User {
 }
 
 model Token {
-  id         String    @id @default(uuid())
-  token      String    @unique
-  type       TokenType
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  expiresAt  DateTime
-  lastUsed   DateTime?
-  deviceInfo String?
-  ipAddress  String?
-  createdAt  DateTime  @default(now())
+  id          String    @id @default(uuid())
+  token       String    @unique
+  type        TokenType
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  expiresAt   DateTime
+  invalidated Boolean   @default(false)
+  lastUsed    DateTime?
+  deviceInfo  String?
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
 
   @@index([token])
   @@index([type])

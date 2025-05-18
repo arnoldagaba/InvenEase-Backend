@@ -16,6 +16,13 @@ const envSchema = z.object({
 
     // JWTs
     JWT_SECRET: z.string(),
+    ACCESS_SECRET: z.string(),
+    ACCESS_EXPIRES_IN: z.string().default("15m"),
+    REFRESH_SECRET: z.string(),
+    REFRESH_EXPIRES_IN: z.string().default("7d"),
+    EMAIL_SECRET: z.string(),
+    PASSWORD_RESET_EXPIRES_IN: z.string().default("15m"),
+    EMAIL_EXPIRES_IN: z.string().default("15m"),
 
     // Frontend
     FRONTEND_URL: z.string(),
@@ -46,6 +53,13 @@ const config = {
     },
     jwt: {
         socket_secret: envVars.data.JWT_SECRET,
+        accessSecret: envVars.data.ACCESS_SECRET,
+        accessExpiresIn: envVars.data.ACCESS_EXPIRES_IN,
+        refreshSecret: envVars.data.REFRESH_SECRET,
+        refreshExpiresIn: envVars.data.REFRESH_EXPIRES_IN,
+        emailSecret: envVars.data.EMAIL_SECRET,
+        passwordResetExpiresIn: envVars.data.PASSWORD_RESET_EXPIRES_IN,
+        emailExpiresIn: envVars.data.EMAIL_EXPIRES_IN,
     },
     frontend: {
         url: envVars.data.FRONTEND_URL,

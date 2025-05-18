@@ -43,6 +43,7 @@ CREATE TABLE "Token" (
     "type" "TokenType" NOT NULL,
     "userId" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
+    "invalidated" BOOLEAN NOT NULL DEFAULT false,
     "lastUsed" TIMESTAMP(3),
     "deviceInfo" TEXT,
     "ipAddress" TEXT,
