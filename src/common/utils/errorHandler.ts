@@ -93,3 +93,4 @@ export function logError(err: Error, req?: Request): void {
     }
     logger.error(info);
 }
+

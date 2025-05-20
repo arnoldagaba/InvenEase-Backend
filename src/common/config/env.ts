@@ -1,7 +1,5 @@
-import dotenv from "dotenv";
 import { z } from "zod";
-
-dotenv.config();
+import "dotenv/config";
 
 /**
  * Define and validate environment variables schema
@@ -21,8 +19,9 @@ const envSchema = z.object({
     REFRESH_SECRET: z.string(),
     REFRESH_EXPIRES_IN: z.string().default("7d"),
     EMAIL_SECRET: z.string(),
-    PASSWORD_RESET_EXPIRES_IN: z.string().default("15m"),
     EMAIL_EXPIRES_IN: z.string().default("15m"),
+    PASSWORD_SECRET: z.string(),
+    PASSWORD_RESET_EXPIRES_IN: z.string().default("15m"),
 
     // Frontend
     FRONTEND_URL: z.string(),
@@ -58,8 +57,9 @@ const config = {
         refreshSecret: envVars.data.REFRESH_SECRET,
         refreshExpiresIn: envVars.data.REFRESH_EXPIRES_IN,
         emailSecret: envVars.data.EMAIL_SECRET,
-        passwordResetExpiresIn: envVars.data.PASSWORD_RESET_EXPIRES_IN,
         emailExpiresIn: envVars.data.EMAIL_EXPIRES_IN,
+        passwordSecret: envVars.data.PASSWORD_SECRET,
+        passwordResetExpiresIn: envVars.data.PASSWORD_RESET_EXPIRES_IN,
     },
     frontend: {
         url: envVars.data.FRONTEND_URL,

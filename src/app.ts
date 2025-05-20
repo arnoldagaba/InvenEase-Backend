@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
 import { StatusCodes } from "http-status-codes";
+import { setupSocketIO } from "./socket.ts";
 import {
     morganMiddleware,
     requestPerformanceLogger,
@@ -14,7 +15,6 @@ import {
     errorMiddleware,
     notFoundHandler,
 } from "./common/middleware/error.middleware.ts";
-import { setupSocketIO } from "./socket.ts";
 
 const app: Express = express();
 const server = http.createServer(app);
