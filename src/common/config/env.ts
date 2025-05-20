@@ -25,6 +25,14 @@ const envSchema = z.object({
 
     // Frontend
     FRONTEND_URL: z.string(),
+
+    // Email
+    EMAIL_HOST: z.string(),
+    EMAIL_PORT: z.string(),
+    EMAIL_USER: z.string(),
+    EMAIL_PASS: z.string(),
+    EMAIL_FROM_NAME: z.string(),
+    EMAIL_FROM_ADDRESS: z.string(),
 });
 
 /**
@@ -63,6 +71,14 @@ const config = {
     },
     frontend: {
         url: envVars.data.FRONTEND_URL,
+    },
+    email: {
+        host: envVars.data.EMAIL_HOST,
+        port: Number(envVars.data.EMAIL_PORT),
+        user: envVars.data.EMAIL_USER,
+        password: envVars.data.EMAIL_PASS,
+        fromName: envVars.data.EMAIL_FROM_NAME,
+        fromAddress: envVars.data.EMAIL_FROM_ADDRESS,
     },
 };
 

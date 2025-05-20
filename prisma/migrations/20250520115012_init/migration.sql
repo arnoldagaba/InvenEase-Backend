@@ -28,6 +28,7 @@ CREATE TABLE "User" (
     "role" "Role" NOT NULL DEFAULT 'STAFF',
     "phone" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "lastLogin" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
