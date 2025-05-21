@@ -60,10 +60,6 @@ export const resetPasswordSchema = z
 
         confirmPassword: z.string().min(1, "Confirm password is required"),
     })
-    .refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords do not match",
-        path: ["confirmPassword"],
-    });
 
 // Change password validation schema
 export const changePasswordSchema = z
@@ -74,14 +70,6 @@ export const changePasswordSchema = z
 
         confirmPassword: z.string().min(1, "Confirm password is required"),
     })
-    .refine((data) => data.newPassword === data.confirmPassword, {
-        message: "Passwords do not match",
-        path: ["confirmPassword"],
-    })
-    .refine((data) => data.currentPassword !== data.newPassword, {
-        message: "New password must be different from current password",
-        path: ["newPassword"],
-    });
 
 // Email verification validation schema
 export const verifyEmailSchema = z.object({
@@ -92,14 +80,3 @@ export const verifyEmailSchema = z.object({
 export const logoutSchema = z.object({
     allDevices: z.boolean().optional().default(false),
 });
-
-export default {
-    registerSchema,
-    loginSchema,
-    refreshTokenSchema,
-    forgotPasswordSchema,
-    resetPasswordSchema,
-    changePasswordSchema,
-    verifyEmailSchema,
-    logoutSchema,
-};

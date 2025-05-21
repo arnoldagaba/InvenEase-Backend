@@ -68,10 +68,7 @@ export const register = async (
     // Return user (without password) and token
     const { password: _, ...userWithoutPassword } = user;
 
-    return {
-        user: userWithoutPassword,
-        verificationToken,
-    };
+    return userWithoutPassword;
 };
 
 /**
@@ -204,6 +201,13 @@ export const refreshToken = async (
     ipAddress?: string,
     deviceInfo?: string
 ) => {
+    if (!refreshTokenStr) {
+        throw new AppError(
+            "Refresh token is required",
+            StatusCodes.BAD_REQUEST
+        );
+    }
+
     // Find token in database
     const tokenRecord = await prisma.token.findUnique({
         where: { token: refreshTokenStr },
@@ -328,6 +332,10 @@ export const logout = async (
     tokenId?: string,
     allDevices = false
 ) => {
+    if (!userId) {
+        throw new AppError("User not authenticated", StatusCodes.UNAUTHORIZED);
+    }
+
     // If logging out from all devices
     if (allDevices) {
         // Invalidate all tokens for the user
@@ -464,7 +472,11 @@ export const forgotPassword = async (email: string) => {
 /**
  * Reset password service using token
  */
-export const resetPassword = async (token: string, newPassword: string) => {
+export const resetPassword = async (
+    token: string,
+    newPassword: string,
+    confirmPassword: string
+) => {
     // Find token in database
     const tokenRecord = await prisma.token.findUnique({
         where: { token },
@@ -493,6 +505,10 @@ export const resetPassword = async (token: string, newPassword: string) => {
             "Password reset token has expired",
             StatusCodes.UNAUTHORIZED
         );
+    }
+
+    if (newPassword !== confirmPassword) {
+        throw new AppError("Passwords do not match", StatusCodes.BAD_REQUEST);
     }
 
     // Get user
@@ -548,8 +564,13 @@ export const resetPassword = async (token: string, newPassword: string) => {
 export const changePassword = async (
     userId: string,
     currentPassword: string,
-    newPassword: string
+    newPassword: string,
+    confirmPassword: string
 ) => {
+    if (!userId) {
+        throw new AppError("User not authenticated", StatusCodes.UNAUTHORIZED);
+    }
+
     // Get user
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -576,6 +597,12 @@ export const changePassword = async (
     if (isSamePassword) {
         throw new AppError(
             "New password must be different from current password",
+            StatusCodes.BAD_REQUEST
+        );
+    }
+    if (newPassword !== confirmPassword) {
+        throw new AppError(
+            "Please confirm the new password",
             StatusCodes.BAD_REQUEST
         );
     }
