@@ -30,18 +30,18 @@
     "nodemailer": "^7.0.3",
     "socket.io": "^4.8.1",
     "winston": "^3.17.0",
-    "zod": "^3.25.7"
+    "zod": "^3.25.20"
   },
   "devDependencies": {
     "@tsconfig/node-lts": "^22.0.1",
-    "@types/compression": "^1.7.5",
+    "@types/compression": "^1.8.0",
     "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.9",
     "@types/ms": "^2.1.0",
-    "@types/node": "^22.15.19",
+    "@types/node": "^22.15.21",
     "@types/nodemailer": "^6.4.17",
     "dotenv": "^16.5.0",
     "prisma": "^6.8.2",
