@@ -7,7 +7,7 @@ import config from "../config/env.ts";
  * Custom token for Morgan to get response time
  */
 morgan.token("response-time", (req: Request) => {
-    // @ts-ignore - responseTime is added by morgan
+    // @ts-expect-error - responseTime is added by morgan
     return req.responseTime ? `${req.responseTime}ms` : "0ms";
 });
 
@@ -54,11 +54,7 @@ export const morganMiddleware = morgan(morganFormat, { stream });
 /**
  * Performance logging middleware to track request execution time
  */
-export const requestPerformanceLogger = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
+export const requestPerformanceLogger = (req: Request, res: Response, next: NextFunction): void => {
     // Record start time
     const start = process.hrtime();
 
@@ -69,7 +65,7 @@ export const requestPerformanceLogger = (
         const time = diff[0] * 1e3 + diff[1] * 1e-6; // Convert to milliseconds
 
         // Add response time to request object for morgan token
-        // @ts-ignore - adding responseTime to request for morgan token
+        // @ts-expect-error - adding responseTime property to Request type
         req.responseTime = time.toFixed(2);
 
         // Log slow requests (more than 1 second)
