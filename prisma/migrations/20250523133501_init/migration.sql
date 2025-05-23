@@ -33,6 +33,8 @@ CREATE TABLE "User" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
+    "isLocked" BOOLEAN,
+    "lockoutExpiry" TIMESTAMP(3),
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -305,6 +307,55 @@ CREATE TABLE "SystemSettings" (
 );
 
 -- CreateTable
+CREATE TABLE "LoginAttempt" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "success" BOOLEAN NOT NULL,
+    "ipAddress" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "LoginAttempt_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "lastActive" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "SecurityLog" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "event" TEXT NOT NULL,
+    "details" JSONB NOT NULL,
+    "severity" TEXT NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "SecurityLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AuditLog" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "action" TEXT NOT NULL,
+    "resource" TEXT NOT NULL,
+    "details" JSONB NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_ProductSuppliers" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
@@ -517,6 +568,33 @@ CREATE UNIQUE INDEX "SystemSettings_key_key" ON "SystemSettings"("key");
 CREATE INDEX "SystemSettings_key_idx" ON "SystemSettings"("key");
 
 -- CreateIndex
+CREATE INDEX "LoginAttempt_userId_createdAt_idx" ON "LoginAttempt"("userId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "Session_userId_idx" ON "Session"("userId");
+
+-- CreateIndex
+CREATE INDEX "Session_lastActive_idx" ON "Session"("lastActive");
+
+-- CreateIndex
+CREATE INDEX "SecurityLog_userId_idx" ON "SecurityLog"("userId");
+
+-- CreateIndex
+CREATE INDEX "SecurityLog_createdAt_idx" ON "SecurityLog"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "SecurityLog_severity_idx" ON "SecurityLog"("severity");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_userId_idx" ON "AuditLog"("userId");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "AuditLog_action_resource_idx" ON "AuditLog"("action", "resource");
+
+-- CreateIndex
 CREATE INDEX "_ProductSuppliers_B_index" ON "_ProductSuppliers"("B");
 
 -- AddForeignKey
@@ -590,6 +668,18 @@ ALTER TABLE "ActivityLog" ADD CONSTRAINT "ActivityLog_userId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "ActivityLog" ADD CONSTRAINT "ActivityLog_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LoginAttempt" ADD CONSTRAINT "LoginAttempt_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SecurityLog" ADD CONSTRAINT "SecurityLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_ProductSuppliers" ADD CONSTRAINT "_ProductSuppliers_A_fkey" FOREIGN KEY ("A") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;

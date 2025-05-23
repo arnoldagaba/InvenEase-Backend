@@ -16,6 +16,7 @@ import appRoutes from "./modules/routes/index.ts";
 import { errorMiddleware, notFoundHandler } from "./common/middleware/error.middleware.ts";
 import { swaggerSpec } from "./common/config/swagger.ts";
 import { metrics } from "./common/config/monitoring.ts";
+import { cleanupService } from "./common/services/cleanup.service";
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -78,5 +79,8 @@ app.use("/api/v1", appRoutes);
 // --- Error handling middleware ---
 app.use(notFoundHandler);
 app.use(errorMiddleware);
+
+// Start cleanup service
+cleanupService.start();
 
 export default server;

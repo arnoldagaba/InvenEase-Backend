@@ -33,6 +33,30 @@ const envSchema = z.object({
     EMAIL_PASS: z.string(),
     EMAIL_FROM_NAME: z.string(),
     EMAIL_FROM_ADDRESS: z.string(),
+
+    // Security
+    MAX_LOGIN_ATTEMPTS: z.coerce.number().default(5),
+    LOGIN_ATTEMPT_WINDOW: z.string().default("15m"),
+    ACCOUNT_LOCKOUT_DURATION: z.string().default("30m"),
+    SESSION_MAX_AGE: z.string().default("24h"),
+    MAX_CONCURRENT_SESSIONS: z.coerce.number().default(5),
+    TOKEN_ROTATION_THRESHOLD: z.coerce.number().default(50),
+
+    // Monitoring
+    LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
+    ENABLE_AUDIT_LOGS: z.coerce.boolean().default(true),
+    ENABLE_SECURITY_LOGS: z.coerce.boolean().default(true),
+    SUSPICIOUS_ACTIVITY_THRESHOLD: z.coerce.number().default(3),
+
+    // Rate Limiting
+    RATE_LIMIT_WINDOW: z.string().default("15m"),
+    RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
+    API_RATE_LIMIT_WINDOW: z.string().default("1h"),
+    API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(1000),
+
+    // Session Management
+    SESSION_CLEANUP_INTERVAL: z.string().default("1h"),
+    INACTIVE_SESSION_TIMEOUT: z.string().default("30m"),
 });
 
 /**
@@ -40,10 +64,7 @@ const envSchema = z.object({
  */
 const envVars = envSchema.safeParse(process.env);
 if (!envVars.success) {
-    console.error(
-        "❌ Invalid environment variables:",
-        envVars.error.flatten().fieldErrors
-    );
+    console.error("❌ Invalid environment variables:", envVars.error.flatten().fieldErrors);
     throw new Error("Invalid environment variables");
 }
 
@@ -79,6 +100,30 @@ const config = {
         password: envVars.data.EMAIL_PASS,
         fromName: envVars.data.EMAIL_FROM_NAME,
         fromAddress: envVars.data.EMAIL_FROM_ADDRESS,
+    },
+    security: {
+        maxLoginAttempts: envVars.data.MAX_LOGIN_ATTEMPTS,
+        loginAttemptWindow: envVars.data.LOGIN_ATTEMPT_WINDOW,
+        accountLockoutDuration: envVars.data.ACCOUNT_LOCKOUT_DURATION,
+        sessionMaxAge: envVars.data.SESSION_MAX_AGE,
+        maxConcurrentSessions: envVars.data.MAX_CONCURRENT_SESSIONS,
+        tokenRotationThreshold: envVars.data.TOKEN_ROTATION_THRESHOLD,
+    },
+    monitoring: {
+        logLevel: envVars.data.LOG_LEVEL,
+        enableAuditLogs: envVars.data.ENABLE_AUDIT_LOGS,
+        enableSecurityLogs: envVars.data.ENABLE_SECURITY_LOGS,
+        suspiciousActivityThreshold: envVars.data.SUSPICIOUS_ACTIVITY_THRESHOLD,
+    },
+    rateLimit: {
+        window: envVars.data.RATE_LIMIT_WINDOW,
+        maxRequests: envVars.data.RATE_LIMIT_MAX_REQUESTS,
+        apiWindow: envVars.data.API_RATE_LIMIT_WINDOW,
+        apiMaxRequests: envVars.data.API_RATE_LIMIT_MAX_REQUESTS,
+    },
+    session: {
+        cleanupInterval: envVars.data.SESSION_CLEANUP_INTERVAL,
+        inactiveTimeout: envVars.data.INACTIVE_SESSION_TIMEOUT,
     },
 };
 
