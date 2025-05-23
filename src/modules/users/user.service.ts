@@ -1,205 +1,177 @@
-import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcrypt';
-import { CreateUserDto, UpdateUserDto } from './user.validators';
-import { AppError } from '../../utils/appError';
-import { StatusCodes } from 'http-status-codes';
+import { hash } from "bcryptjs";
+import { StatusCodes } from "http-status-codes";
+import prisma from "../../common/config/prisma.ts";
+import { ActivityLog, Prisma, User } from "../../generated/prisma/client.ts";
+import { CreateUserDto, UpdateUserDto } from "./user.validators.ts";
+import { AppError } from "../../common/utils/errorHandler.ts";
 
-const prisma = new PrismaClient();
+interface PaginatedUsers {
+    users: Omit<User, "password">[];
+    total: number;
+    page: number;
+    totalPages: number;
+}
 
 export class UserService {
-  async createUser(data: CreateUserDto) {
-    const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
+    async createUser(data: CreateUserDto): Promise<Omit<User, "password">> {
+        const existingUser = await prisma.user.findUnique({
+            where: { email: data.email },
+        });
 
-    if (existingUser) {
-      throw new AppError('Email already registered', StatusCodes.CONFLICT);
+        if (existingUser) {
+            throw new AppError("Email already registered", StatusCodes.CONFLICT);
+        }
+
+        const hashedPassword = await hash(data.password, 10);
+
+        const user = await prisma.user.create({
+            data: {
+                ...data,
+                password: hashedPassword,
+            },
+        });
+        if (!user) {
+            throw new AppError("User creation failed", StatusCodes.INTERNAL_SERVER_ERROR);
+        }
+
+        // Exclude password from the returned user object
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _, ...userWithoutPassword } = user;
+        return userWithoutPassword;
     }
 
-    const hashedPassword = await hash(data.password, 10);
+    async getUsers(page = 1, limit = 10, search?: string): Promise<PaginatedUsers> {
+        const skip = (page - 1) * limit;
+        const where = search
+            ? {
+                  OR: [
+                      { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
+                      { email: { contains: search, mode: Prisma.QueryMode.insensitive } },
+                  ],
+              }
+            : {};
 
-    return prisma.user.create({
-      data: {
-        ...data,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        phone: true,
-        isActive: true,
-        isVerified: true,
-        createdAt: true,
-      },
-    });
-  }
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { createdAt: "desc" },
+            }),
+            prisma.user.count({ where }),
+        ]);
 
-  async getUsers(page = 1, limit = 10, search?: string) {
-    const skip = (page - 1) * limit;
-    
-    const where = search ? {
-      OR: [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-      ],
-    } : {};
+        // Exclude password from the returned user objects
+        const usersWithoutPassword = users.map(
+            ({ password: _, ...userWithoutPassword }) => userWithoutPassword
+        );
 
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          role: true,
-          phone: true,
-          isActive: true,
-          isVerified: true,
-          lastLogin: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.user.count({ where }),
-    ]);
-
-    return {
-      users,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    };
-  }
-
-  async getUserById(id: string) {
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        phone: true,
-        isActive: true,
-        isVerified: true,
-        lastLogin: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    if (!user) {
-      throw new AppError('User not found', StatusCodes.NOT_FOUND);
+        return {
+            users: usersWithoutPassword,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+        };
     }
 
-    return user;
-  }
+    async getUserById(id: string): Promise<Omit<User, "password">> {
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
 
-  async updateUser(id: string, data: UpdateUserDto) {
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
+        if (!user) {
+            throw new AppError("User not found", StatusCodes.NOT_FOUND);
+        }
 
-    if (!user) {
-      throw new AppError('User not found', StatusCodes.NOT_FOUND);
+        // Exclude password from the returned user object
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _, ...userWithoutPassword } = user;
+        return userWithoutPassword;
     }
 
-    if (data.email && data.email !== user.email) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email: data.email },
-      });
+    async updateUser(id: string, data: UpdateUserDto): Promise<Omit<User, "password">> {
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
 
-      if (existingUser) {
-        throw new AppError('Email already registered', StatusCodes.CONFLICT);
-      }
+        if (!user) {
+            throw new AppError("User not found", StatusCodes.NOT_FOUND);
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: data,
+        });
+        if (!updatedUser) {
+            throw new AppError("User update failed", StatusCodes.INTERNAL_SERVER_ERROR);
+        }
+
+        return updatedUser;
     }
 
-    const updateData: any = { ...data };
-    if (data.password) {
-      updateData.password = await hash(data.password, 10);
+    async deleteUser(id: string): Promise<void> {
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
+        if (!user) {
+            throw new AppError("User not found", StatusCodes.NOT_FOUND);
+        }
+
+        await prisma.user.update({
+            where: { id },
+            data: {
+                deletedAt: new Date(),
+                isActive: false,
+            },
+        });
+
+        return;
     }
 
-    return prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        phone: true,
-        isActive: true,
-        isVerified: true,
-        updatedAt: true,
-      },
-    });
-  }
+    async toggleUserStatus(id: string): Promise<Omit<User, "password">> {
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
+        if (!user) {
+            throw new AppError("User not found", StatusCodes.NOT_FOUND);
+        }
 
-  async deleteUser(id: string) {
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
+        const updatedUser = await prisma.user.update({
+            where: { id },
+            data: {
+                isActive: !user.isActive,
+            },
+        });
 
-    if (!user) {
-      throw new AppError('User not found', StatusCodes.NOT_FOUND);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { password: _, ...userWithoutPassword } = updatedUser;
+        return userWithoutPassword;
     }
 
-    return prisma.user.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        isActive: false,
-      },
-    });
-  }
+    async getUserActivity(
+        id: string,
+        page = 1,
+        limit = 10
+    ): Promise<{ activities: ActivityLog[]; total: number; page: number; totalPages: number }> {
+        const skip = (page - 1) * limit;
 
-  async toggleUserStatus(id: string) {
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
+        const [activities, total] = await Promise.all([
+            prisma.activityLog.findMany({
+                where: { userId: id },
+                skip,
+                take: limit,
+                orderBy: { timestamp: "desc" },
+            }),
+            prisma.activityLog.count({
+                where: { userId: id },
+            }),
+        ]);
 
-    if (!user) {
-      throw new AppError('User not found', StatusCodes.NOT_FOUND);
+        return {
+            activities,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+        };
     }
-
-    return prisma.user.update({
-      where: { id },
-      data: {
-        isActive: !user.isActive,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        isActive: true,
-      },
-    });
-  }
-
-  async getUserActivity(id: string, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-
-    const [activities, total] = await Promise.all([
-      prisma.activityLog.findMany({
-        where: { userId: id },
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.activityLog.count({
-        where: { userId: id },
-      }),
-    ]);
-
-    return {
-      activities,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    };
-  }
-} 
+}

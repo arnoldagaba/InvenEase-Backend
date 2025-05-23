@@ -18,23 +18,14 @@ const passwordSchema = z
 
 /** Create user validation schema */
 export const createUserSchema = z.object({
-    email: z
-        .string()
-        .email("Invalid email address")
-        .max(255, "Email is too long"),
+    email: z.string().email("Invalid email address").max(255, "Email is too long"),
 
     password: passwordSchema,
 
     name: z
         .string()
-        .min(
-            NAME_MIN_LENGTH,
-            `Name must be at least ${NAME_MIN_LENGTH} characters long`
-        )
-        .max(
-            NAME_MAX_LENGTH,
-            `Name is too long (max ${NAME_MAX_LENGTH} characters)`
-        ),
+        .min(NAME_MIN_LENGTH, `Name must be at least ${NAME_MIN_LENGTH} characters long`)
+        .max(NAME_MAX_LENGTH, `Name is too long (max ${NAME_MAX_LENGTH} characters)`),
 
     role: z.nativeEnum(Role).optional().default(Role.STAFF),
 
@@ -46,19 +37,14 @@ export const createUserSchema = z.object({
 
     isActive: z.boolean().optional().default(true),
 });
+export type CreateUserDto = z.infer<typeof createUserSchema>;
 
 /** Update user validation schema */
 export const updateUserSchema = z.object({
     name: z
         .string()
-        .min(
-            NAME_MIN_LENGTH,
-            `Name must be at least ${NAME_MIN_LENGTH} characters long`
-        )
-        .max(
-            NAME_MAX_LENGTH,
-            `Name is too long (max ${NAME_MAX_LENGTH} characters)`
-        )
+        .min(NAME_MIN_LENGTH, `Name must be at least ${NAME_MIN_LENGTH} characters long`)
+        .max(NAME_MAX_LENGTH, `Name is too long (max ${NAME_MAX_LENGTH} characters)`)
         .optional(),
 
     role: z.nativeEnum(Role).optional(),
@@ -77,14 +63,8 @@ export const updateUserSchema = z.object({
 export const updateProfileSchema = z.object({
     name: z
         .string()
-        .min(
-            NAME_MIN_LENGTH,
-            `Name must be at least ${NAME_MIN_LENGTH} characters long`
-        )
-        .max(
-            NAME_MAX_LENGTH,
-            `Name is too long (max ${NAME_MAX_LENGTH} characters)`
-        )
+        .min(NAME_MIN_LENGTH, `Name must be at least ${NAME_MIN_LENGTH} characters long`)
+        .max(NAME_MAX_LENGTH, `Name is too long (max ${NAME_MAX_LENGTH} characters)`)
         .optional(),
 
     phone: z
@@ -94,6 +74,7 @@ export const updateProfileSchema = z.object({
         .optional()
         .nullable(),
 });
+export type UpdateUserDto = z.infer<typeof updateProfileSchema>;
 
 /** Query parameters for user listing */
 export const getUsersQuerySchema = z.object({

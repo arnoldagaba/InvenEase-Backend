@@ -1,13 +1,12 @@
-import { Request, Response } from "express";
-import { UserService } from "./user.service";
-import { catchAsync } from "../../utils/catchAsync";
-import { AppError } from "../../utils/appError";
+import { Request, RequestHandler, Response } from "express";
+import asyncHandler from "express-async-handler";
 import { StatusCodes } from "http-status-codes";
+import { UserService } from "./user.service.ts";
 
 const userService = new UserService();
 
 export class UserController {
-    createUser = catchAsync(async (req: Request, res: Response) => {
+    createUser: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
         const user = await userService.createUser(req.body);
         res.status(StatusCodes.CREATED).json({
             status: "success",
@@ -15,7 +14,7 @@ export class UserController {
         });
     });
 
-    getUsers = catchAsync(async (req: Request, res: Response) => {
+    getUsers: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const search = req.query.search as string;
@@ -27,7 +26,7 @@ export class UserController {
         });
     });
 
-    getUserById = catchAsync(async (req: Request, res: Response) => {
+    getUserById: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
         const user = await userService.getUserById(req.params.id);
         res.status(StatusCodes.OK).json({
             status: "success",
@@ -35,7 +34,7 @@ export class UserController {
         });
     });
 
-    updateUser = catchAsync(async (req: Request, res: Response) => {
+    updateUser: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
         const user = await userService.updateUser(req.params.id, req.body);
         res.status(StatusCodes.OK).json({
             status: "success",
@@ -43,7 +42,7 @@ export class UserController {
         });
     });
 
-    deleteUser = catchAsync(async (req: Request, res: Response) => {
+    deleteUser: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
         await userService.deleteUser(req.params.id);
         res.status(StatusCodes.NO_CONTENT).json({
             status: "success",
@@ -51,7 +50,7 @@ export class UserController {
         });
     });
 
-    toggleUserStatus = catchAsync(async (req: Request, res: Response) => {
+    toggleUserStatus: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
         const user = await userService.toggleUserStatus(req.params.id);
         res.status(StatusCodes.OK).json({
             status: "success",
@@ -59,7 +58,7 @@ export class UserController {
         });
     });
 
-    getUserActivity = catchAsync(async (req: Request, res: Response) => {
+    getUserActivity: RequestHandler = asyncHandler(async (req: Request, res: Response) => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
 
