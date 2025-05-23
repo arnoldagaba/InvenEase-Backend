@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import prisma from "./common/config/prisma.ts";
 import logger from "./common/utils/logger.ts";
 import config from "./common/config/env.ts";
-import { Role } from "./generated/prisma/client.ts";
+import { Notification, Role } from "./generated/prisma/client.ts";
 
 interface SocketUser {
     id: string;
@@ -15,7 +15,7 @@ interface SocketUser {
 // Map to store active user connections
 const connectedUsers = new Map<string, string[]>();
 
-export function setupSocketIO(server: HttpServer) {
+export function setupSocketIO(server: HttpServer): Server {
     const io = new Server(server, {
         cors: {
             origin: config.frontend.url || "http://localhost:5174",
@@ -33,10 +33,7 @@ export function setupSocketIO(server: HttpServer) {
             }
 
             // Verify the token
-            const decoded = jwt.verify(
-                token,
-                config.jwt.socket_secret as string
-            ) as SocketUser;
+            const decoded = jwt.verify(token, config.jwt.socket_secret as string) as SocketUser;
             if (!decoded.id) {
                 return next(new Error("Authentication error: Invalid token"));
             }
@@ -126,7 +123,8 @@ export function setupSocketIO(server: HttpServer) {
 }
 
 // Function to send notification to specific users
-export async function sendNotification(notification: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function sendNotification(notification: any): Promise<Notification> {
     try {
         // First, save the notification to the database
         const savedNotification = await prisma.notification.create({
@@ -154,10 +152,8 @@ export async function sendNotification(notification: any) {
 }
 
 // Function to broadcast notifications to all connected users or by role
-export async function broadcastNotification(
-    notification: any,
-    roles?: string[]
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function broadcastNotification(notification: any, roles?: string[]): Promise<any> {
     try {
         // For each recipient, create a notification
         let recipients;
@@ -167,9 +163,7 @@ export async function broadcastNotification(
             recipients = await prisma.user.findMany({
                 where: {
                     role: {
-                        in: roles.map(
-                            (role) => Role[role as keyof typeof Role]
-                        ),
+                        in: roles.map((role) => Role[role as keyof typeof Role]),
                     },
                     isActive: true,
                 },
