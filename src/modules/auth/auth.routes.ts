@@ -36,7 +36,7 @@ const router: Router = Router();
 
 /**
  * @swagger
- * /api/auth/register:
+ * /api/v1/auth/register:
  *   post:
  *     tags: [Authentication]
  *     summary: Register a new user
@@ -79,7 +79,7 @@ router.post("/register", validateRequest(registerSchema, "body"), register);
 
 /**
  * @swagger
- * /api/auth/login:
+ * /api/v1/auth/login:
  *   post:
  *     tags: [Authentication]
  *     summary: Login user
@@ -120,7 +120,7 @@ router.post("/login", validateRequest(loginSchema, "body"), login);
 
 /**
  * @swagger
- * /api/auth/forgot-password:
+ * /api/v1/auth/forgot-password:
  *   post:
  *     tags: [Authentication]
  *     summary: Request password reset
@@ -147,7 +147,7 @@ router.post("/forgot-password", validateRequest(forgotPasswordSchema, "body"), f
 
 /**
  * @swagger
- * /api/auth/reset-password:
+ * /api/v1/auth/reset-password:
  *   post:
  *     tags: [Authentication]
  *     summary: Reset password
@@ -178,7 +178,7 @@ router.post("/reset-password", validateRequest(resetPasswordSchema, "body"), res
 
 /**
  * @swagger
- * /api/auth/verify-email:
+ * /api/v1/auth/verify-email:
  *   get:
  *     tags: [Authentication]
  *     summary: Verify email address
@@ -199,7 +199,7 @@ router.get("/verify-email", validateRequest(verifyEmailSchema, "query"), verifyE
 
 /**
  * @swagger
- * /api/auth/refresh-token:
+ * /api/v1/auth/refresh-token:
  *   post:
  *     tags: [Authentication]
  *     summary: Refresh access token
@@ -221,7 +221,7 @@ router.post("/refresh-token", authenticate, refreshToken);
 
 /**
  * @swagger
- * /api/auth/logout:
+ * /api/v1/auth/logout:
  *   post:
  *     tags: [Authentication]
  *     summary: Logout user
@@ -247,7 +247,7 @@ router.post("/logout", authenticate, validateRequest(logoutSchema, "body"), logo
 
 /**
  * @swagger
- * /api/auth/change-password:
+ * /api/v1/auth/change-password:
  *   post:
  *     tags: [Authentication]
  *     summary: Change password
@@ -286,7 +286,7 @@ router.post(
 
 /**
  * @swagger
- * /api/auth/sessions:
+ * /api/v1/auth/sessions:
  *   get:
  *     tags: [Authentication]
  *     summary: Get user sessions
@@ -303,7 +303,7 @@ router.get("/sessions", authenticate, getUserSessions);
 
 /**
  * @swagger
- * /api/auth/sessions/{sessionId}:
+ * /api/v1/auth/sessions/{sessionId}:
  *   delete:
  *     tags: [Authentication]
  *     summary: Invalidate specific session
@@ -333,7 +333,7 @@ router.delete(
 
 /**
  * @swagger
- * /api/auth/sessions:
+ * /api/v1/auth/sessions:
  *   delete:
  *     tags: [Authentication]
  *     summary: Invalidate other sessions
