@@ -4,9 +4,7 @@ import logger from "./common/utils/logger.ts";
 
 const PORT = config.server.port;
 server.listen(PORT, () => {
-    logger.info(
-        `Server running on port ${PORT} in ${config.server.environment} mode`
-    );
+    logger.info(`Server running on port ${PORT} in ${config.server.environment} mode`);
     logger.info(`Browse to http://localhost:${PORT}`);
 });
 
@@ -16,6 +14,7 @@ process.on("uncaughtException", (err) => {
     process.exit(1);
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 process.on("unhandledRejection", (reason: any) => {
     logger.error({ msg: "UNHANDLED REJECTION", error: reason });
     server.close(() => process.exit(1));
