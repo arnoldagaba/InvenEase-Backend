@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { StatusCodes } from "http-status-codes";
-import { Role, Token, TokenType } from "../../generated/prisma/client.ts";
+import { Role, Session, Token, TokenType, User } from "../../generated/prisma/client.ts";
 import prisma from "../../common/config/prisma.ts";
 import { generateToken } from "../../common/config/jwt.ts";
 import config from "../../common/config/env.ts";
@@ -17,16 +17,13 @@ export const register = async (
     name: string,
     role: Role = Role.STAFF,
     phone?: string
-) => {
+): Promise<Omit<User, "password">> => {
     // Check if the user exists already
     const existingUser = await prisma.user.findUnique({
         where: { email },
     });
     if (existingUser) {
-        throw new AppError(
-            "User with this email already exists",
-            StatusCodes.CONFLICT
-        );
+        throw new AppError("User with this email already exists", StatusCodes.CONFLICT);
     }
 
     // Hash the password
@@ -66,6 +63,7 @@ export const register = async (
     await emailService.sendVerificationEmail(user.email, verificationEmail);
 
     // Return user (without password) and token
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
 
     return userWithoutPassword;
@@ -80,7 +78,13 @@ export const login = async (
     ipAddress?: string,
     deviceInfo?: string,
     rememberMe = false
-) => {
+): Promise<{
+    user: Omit<User, "password">;
+    accessToken: string;
+    accessTokenExpiry: Date;
+    refreshToken?: string;
+    refreshTokenExpiry?: Date;
+}> => {
     // Find user by email
     const user = await prisma.user.findUnique({
         where: { email },
@@ -88,10 +92,7 @@ export const login = async (
 
     // Check if user exists
     if (!user) {
-        throw new AppError(
-            "Invalid email or password",
-            StatusCodes.UNAUTHORIZED
-        );
+        throw new AppError("Invalid email or password", StatusCodes.UNAUTHORIZED);
     }
 
     // Check if user is active
@@ -102,10 +103,7 @@ export const login = async (
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-        throw new AppError(
-            "Invalid email or password",
-            StatusCodes.UNAUTHORIZED
-        );
+        throw new AppError("Invalid email or password", StatusCodes.UNAUTHORIZED);
     }
 
     // Check if user is verified
@@ -183,6 +181,7 @@ export const login = async (
     });
 
     // Return user (without password) and tokens
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
     return {
         user: userWithoutPassword,
@@ -200,12 +199,14 @@ export const refreshToken = async (
     refreshTokenStr: string,
     ipAddress?: string,
     deviceInfo?: string
-) => {
+): Promise<{
+    accessToken: string;
+    accessTokenExpiry: Date;
+    refreshToken?: string;
+    refreshTokenExpiry?: Date;
+}> => {
     if (!refreshTokenStr) {
-        throw new AppError(
-            "Refresh token is required",
-            StatusCodes.BAD_REQUEST
-        );
+        throw new AppError("Refresh token is required", StatusCodes.BAD_REQUEST);
     }
 
     // Find token in database
@@ -214,11 +215,7 @@ export const refreshToken = async (
     });
 
     // Check if token exists and is valid
-    if (
-        !tokenRecord ||
-        tokenRecord.type !== TokenType.REFRESH ||
-        tokenRecord.invalidated
-    ) {
+    if (!tokenRecord || tokenRecord.type !== TokenType.REFRESH || tokenRecord.invalidated) {
         throw new AppError("Invalid refresh token", StatusCodes.UNAUTHORIZED);
     }
 
@@ -238,10 +235,7 @@ export const refreshToken = async (
     });
 
     if (!user || !user.isActive) {
-        throw new AppError(
-            "User not found or inactive",
-            StatusCodes.UNAUTHORIZED
-        );
+        throw new AppError("User not found or inactive", StatusCodes.UNAUTHORIZED);
     }
 
     // Generate new access token
@@ -264,16 +258,15 @@ export const refreshToken = async (
     });
 
     // Generate new refresh token
-    const { token: newRefreshToken, expiresAt: refreshExpiresAt } =
-        generateToken(
-            {
-                userId: user.id,
-                email: user.email,
-                role: user.role,
-                tokenId: accessTokenRecord.id,
-            },
-            TokenType.REFRESH
-        );
+    const { token: newRefreshToken, expiresAt: refreshExpiresAt } = generateToken(
+        {
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+            tokenId: accessTokenRecord.id,
+        },
+        TokenType.REFRESH
+    );
 
     // Create new refresh token record
     const refreshTokenRecord = await prisma.token.create({
@@ -331,7 +324,7 @@ export const logout = async (
     userId: string,
     tokenId?: string,
     allDevices = false
-) => {
+): Promise<{ success: boolean; message: string }> => {
     if (!userId) {
         throw new AppError("User not authenticated", StatusCodes.UNAUTHORIZED);
     }
@@ -411,7 +404,9 @@ export const logout = async (
 /**
  * Forgot password service - sends password reset email
  */
-export const forgotPassword = async (email: string) => {
+export const forgotPassword = async (
+    email: string
+): Promise<{ success: boolean; message: string }> => {
     // Find user by email
     const user = await prisma.user.findUnique({
         where: { email },
@@ -419,14 +414,11 @@ export const forgotPassword = async (email: string) => {
 
     // For security, don't reveal if user exists or not
     if (!user || !user.isActive) {
-        logger.debug(
-            `Password reset requested for non-existent or inactive user: ${email}`
-        );
+        logger.debug(`Password reset requested for non-existent or inactive user: ${email}`);
         // Still return success to prevent email enumeration
         return {
             success: true,
-            message:
-                "If your email is registered, you will receive a password reset link",
+            message: "If your email is registered, you will receive a password reset link",
         };
     }
 
@@ -464,8 +456,7 @@ export const forgotPassword = async (email: string) => {
 
     return {
         success: true,
-        message:
-            "If your email is registered, you will receive a password reset link",
+        message: "If your email is registered, you will receive a password reset link",
     };
 };
 
@@ -476,22 +467,15 @@ export const resetPassword = async (
     token: string,
     newPassword: string,
     confirmPassword: string
-) => {
+): Promise<{ success: boolean; message: string }> => {
     // Find token in database
     const tokenRecord = await prisma.token.findUnique({
         where: { token },
     });
 
     // Check if token exists and is valid
-    if (
-        !tokenRecord ||
-        tokenRecord.type !== TokenType.PASSWORD_RESET ||
-        tokenRecord.invalidated
-    ) {
-        throw new AppError(
-            "Invalid or expired password reset token",
-            StatusCodes.UNAUTHORIZED
-        );
+    if (!tokenRecord || tokenRecord.type !== TokenType.PASSWORD_RESET || tokenRecord.invalidated) {
+        throw new AppError("Invalid or expired password reset token", StatusCodes.UNAUTHORIZED);
     }
 
     // Check if token is expired
@@ -501,10 +485,7 @@ export const resetPassword = async (
             where: { id: tokenRecord.id },
             data: { invalidated: true },
         });
-        throw new AppError(
-            "Password reset token has expired",
-            StatusCodes.UNAUTHORIZED
-        );
+        throw new AppError("Password reset token has expired", StatusCodes.UNAUTHORIZED);
     }
 
     if (newPassword !== confirmPassword) {
@@ -566,7 +547,7 @@ export const changePassword = async (
     currentPassword: string,
     newPassword: string,
     confirmPassword: string
-) => {
+): Promise<{ success: boolean; message: string }> => {
     if (!userId) {
         throw new AppError("User not authenticated", StatusCodes.UNAUTHORIZED);
     }
@@ -581,15 +562,9 @@ export const changePassword = async (
     }
 
     // Verify current password
-    const isPasswordValid = await bcrypt.compare(
-        currentPassword,
-        user.password
-    );
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isPasswordValid) {
-        throw new AppError(
-            "Current password is incorrect",
-            StatusCodes.UNAUTHORIZED
-        );
+        throw new AppError("Current password is incorrect", StatusCodes.UNAUTHORIZED);
     }
 
     // Check if new password is different from current
@@ -601,10 +576,7 @@ export const changePassword = async (
         );
     }
     if (newPassword !== confirmPassword) {
-        throw new AppError(
-            "Please confirm the new password",
-            StatusCodes.BAD_REQUEST
-        );
+        throw new AppError("Please confirm the new password", StatusCodes.BAD_REQUEST);
     }
 
     // Hash new password
@@ -632,7 +604,9 @@ export const changePassword = async (
 /**
  * Email verification service
  */
-export const verifyEmail = async (token: string) => {
+export const verifyEmail = async (
+    token: string
+): Promise<{ success: boolean; message: string }> => {
     // Find token in database
     const tokenRecord = await prisma.token.findUnique({
         where: { token },
@@ -644,10 +618,7 @@ export const verifyEmail = async (token: string) => {
         tokenRecord.type !== TokenType.EMAIL_VERIFICATION ||
         tokenRecord.invalidated
     ) {
-        throw new AppError(
-            "Invalid or expired verification token",
-            StatusCodes.UNAUTHORIZED
-        );
+        throw new AppError("Invalid or expired verification token", StatusCodes.UNAUTHORIZED);
     }
 
     // Check if token is expired
@@ -657,10 +628,7 @@ export const verifyEmail = async (token: string) => {
             where: { id: tokenRecord.id },
             data: { invalidated: true },
         });
-        throw new AppError(
-            "Verification token has expired",
-            StatusCodes.UNAUTHORIZED
-        );
+        throw new AppError("Verification token has expired", StatusCodes.UNAUTHORIZED);
     }
 
     // Get user
@@ -697,4 +665,134 @@ export const verifyEmail = async (token: string) => {
     });
 
     return { success: true, message: "Email verified successfully" };
+};
+
+/**
+ * Get all active sessions for a user
+ */
+export const getUserSessions = async (userId: string): Promise<Session[]> => {
+    const sessions = await prisma.token.findMany({
+        where: {
+            userId,
+            type: TokenType.ACCESS,
+            invalidated: false,
+            expiresAt: {
+                gt: new Date(),
+            },
+        },
+        orderBy: {
+            lastUsed: "desc",
+        },
+    });
+
+    return sessions.map((session) => ({
+        id: session.id,
+        createdAt: session.createdAt,
+        userId: session.userId,
+        lastActive: session.lastUsed || new Date(), // Provide default value in case lastUsed is null
+    }));
+};
+
+/**
+ * Invalidate a specific session
+ */
+export const invalidateSession = async (
+    userId: string,
+    sessionId: string
+): Promise<{ success: boolean; message: string }> => {
+    const session = await prisma.token.findFirst({
+        where: {
+            id: sessionId,
+            userId,
+            type: TokenType.ACCESS,
+            invalidated: false,
+        },
+    });
+
+    if (!session) {
+        throw new AppError("Session not found", StatusCodes.NOT_FOUND);
+    }
+
+    // Invalidate the access token
+    await prisma.token.update({
+        where: { id: sessionId },
+        data: { invalidated: true },
+    });
+
+    // If there's a refresh token associated with this session, invalidate it too
+    const refreshToken = await prisma.token.findFirst({
+        where: {
+            userId,
+            type: TokenType.REFRESH,
+            invalidated: false,
+        },
+    });
+
+    if (refreshToken) {
+        await prisma.token.update({
+            where: { id: refreshToken.id },
+            data: { invalidated: true },
+        });
+    }
+
+    // Log the session invalidation
+    await prisma.activityLog.create({
+        data: {
+            entityType: "User",
+            entityId: userId,
+            action: "SESSION_INVALIDATED",
+            userId,
+            details: {
+                sessionId,
+                deviceInfo: session.deviceInfo,
+                ipAddress: session.ipAddress,
+            },
+        },
+    });
+
+    return { success: true, message: "Session invalidated successfully" };
+};
+
+/**
+ * Invalidate all sessions for a user except the current one
+ */
+export const invalidateOtherSessions = async (
+    userId: string,
+    currentSessionId: string
+): Promise<{ success: boolean; message: string }> => {
+    // Invalidate all access tokens except the current one
+    await prisma.token.updateMany({
+        where: {
+            userId,
+            type: TokenType.ACCESS,
+            id: { not: currentSessionId },
+            invalidated: false,
+        },
+        data: { invalidated: true },
+    });
+
+    // Invalidate all refresh tokens
+    await prisma.token.updateMany({
+        where: {
+            userId,
+            type: TokenType.REFRESH,
+            invalidated: false,
+        },
+        data: { invalidated: true },
+    });
+
+    // Log the action
+    await prisma.activityLog.create({
+        data: {
+            entityType: "User",
+            entityId: userId,
+            action: "ALL_OTHER_SESSIONS_INVALIDATED",
+            userId,
+            details: {
+                currentSessionId,
+            },
+        },
+    });
+
+    return { success: true, message: "All other sessions invalidated successfully" };
 };

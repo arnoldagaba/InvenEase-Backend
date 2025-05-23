@@ -17,19 +17,10 @@ const passwordSchema = z
  * Registration validation schema
  */
 export const registerSchema = z.object({
-    email: z
-        .string()
-        .email("Invalid email address")
-        .max(255, "Email is too long"),
+    email: z.string().email("Invalid email address").max(255, "Email is too long"),
     password: passwordSchema,
-    name: z
-        .string()
-        .min(2, "Name must be at least 2 characters long")
-        .max(255, "Name is too long"),
-    role: z
-        .enum([Role.ADMIN, Role.MANAGER, Role.STAFF])
-        .optional()
-        .default(Role.STAFF),
+    name: z.string().min(2, "Name must be at least 2 characters long").max(255, "Name is too long"),
+    role: z.enum([Role.ADMIN, Role.MANAGER, Role.STAFF]).optional().default(Role.STAFF),
 });
 
 // Login validation schema
@@ -52,24 +43,22 @@ export const forgotPasswordSchema = z.object({
 });
 
 // Password reset validation schema
-export const resetPasswordSchema = z
-    .object({
-        token: z.string().min(1, "Reset token is required"),
+export const resetPasswordSchema = z.object({
+    token: z.string().min(1, "Reset token is required"),
 
-        password: passwordSchema,
+    password: passwordSchema,
 
-        confirmPassword: z.string().min(1, "Confirm password is required"),
-    })
+    confirmPassword: z.string().min(1, "Confirm password is required"),
+});
 
 // Change password validation schema
-export const changePasswordSchema = z
-    .object({
-        currentPassword: z.string().min(1, "Current password is required"),
+export const changePasswordSchema = z.object({
+    currentPassword: z.string().min(1, "Current password is required"),
 
-        newPassword: passwordSchema,
+    newPassword: passwordSchema,
 
-        confirmPassword: z.string().min(1, "Confirm password is required"),
-    })
+    confirmPassword: z.string().min(1, "Confirm password is required"),
+});
 
 // Email verification validation schema
 export const verifyEmailSchema = z.object({
@@ -79,4 +68,11 @@ export const verifyEmailSchema = z.object({
 // Logout validation schema (optional token)
 export const logoutSchema = z.object({
     allDevices: z.boolean().optional().default(false),
+});
+
+/**
+ * Session ID validation schema
+ */
+export const sessionIdSchema = z.object({
+    sessionId: z.string().uuid("Invalid session ID"),
 });
