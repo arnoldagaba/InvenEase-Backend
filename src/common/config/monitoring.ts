@@ -1,14 +1,13 @@
 import client from "prom-client";
-import logger from "../utils/logger";
+import logger from "../utils/logger.ts";
 
 // Create a Registry to register metrics
 const register = new client.Registry();
 
 // Add default metrics (CPU, memory, etc.)
 client.collectDefaultMetrics({
-    app: "invenease-server",
     prefix: "invenease_",
-    timeout: 10000,
+    eventLoopMonitoringPrecision: 10000,
     register,
 });
 
@@ -69,36 +68,41 @@ register.registerMetric(errorCounter);
 // Helper functions for metrics
 export const metrics = {
     // HTTP metrics
-    recordHttpRequest: (method: string, route: string, statusCode: number, duration: number) => {
+    recordHttpRequest: (
+        method: string,
+        route: string,
+        statusCode: number,
+        duration: number
+    ): void => {
         httpRequestDuration.labels(method, route, statusCode.toString()).observe(duration);
     },
 
     // Socket metrics
-    updateSocketConnections: (count: number) => {
+    updateSocketConnections: (count: number): void => {
         socketConnections.set(count);
     },
 
-    recordSocketEvent: (eventType: string) => {
+    recordSocketEvent: (eventType: string): void => {
         socketEvents.labels(eventType).inc();
     },
 
     // Notification metrics
-    recordNotification: (type: string) => {
+    recordNotification: (type: string): void => {
         notificationCounter.labels(type).inc();
     },
 
     // Database metrics
-    recordDbQuery: (operation: string, table: string, duration: number) => {
+    recordDbQuery: (operation: string, table: string, duration: number): void => {
         dbQueryDuration.labels(operation, table).observe(duration);
     },
 
     // Error metrics
-    recordError: (type: string, source: string) => {
+    recordError: (type: string, source: string): void => {
         errorCounter.labels(type, source).inc();
     },
 
     // Get metrics for Prometheus
-    getMetrics: async () => {
+    getMetrics: async (): Promise<string> => {
         try {
             return await register.metrics();
         } catch (error) {
