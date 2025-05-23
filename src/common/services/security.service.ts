@@ -1,8 +1,8 @@
-import { PrismaClient, Token, User } from "@prisma/client";
-import { AppError } from "../utils/errorHandler";
 import { StatusCodes } from "http-status-codes";
-import logger from "../utils/logger";
-import config from "../config/env";
+import { PrismaClient, Token } from "../../generated/prisma/client.ts";
+import { AppError } from "../utils/errorHandler.ts";
+import logger from "../utils/logger.ts";
+import config from "../config/env.ts";
 
 class SecurityService {
     private prisma: PrismaClient;
@@ -195,7 +195,7 @@ class SecurityService {
     }
 
     private getInactiveSessionTimeoutMs(): number {
-        return this.parseTimeString(config.security.inactiveSessionTimeout);
+        return this.parseTimeString(config.session.inactiveTimeout);
     }
 
     private parseTimeString(timeString: string): number {

@@ -1,7 +1,7 @@
-import { securityService } from "./security.service";
-import { loggingService } from "./logging.service";
-import logger from "../utils/logger";
-import config from "../config/env";
+import { securityService } from "./security.service.ts";
+import { loggingService } from "./logging.service.ts";
+import logger from "../utils/logger.ts";
+import config from "../config/env.ts";
 
 class CleanupService {
     private cleanupInterval: NodeJS.Timeout | null = null;

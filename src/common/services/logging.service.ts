@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma/client.ts";
 import logger from "../utils/logger.ts";
 import config from "../config/env.ts";
 

@@ -16,7 +16,7 @@ import appRoutes from "./modules/routes/index.ts";
 import { errorMiddleware, notFoundHandler } from "./common/middleware/error.middleware.ts";
 import { swaggerSpec } from "./common/config/swagger.ts";
 import { metrics } from "./common/config/monitoring.ts";
-import { cleanupService } from "./common/services/cleanup.service";
+import { cleanupService } from "./common/services/cleanup.service.ts";
 
 const app: Express = express();
 const server = http.createServer(app);
